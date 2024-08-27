@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='pomo.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Pomodoro Timer</h1>
+        <input type="number" id="minutes" placeholder="Enter minutes" required>
+        <button onclick="startTimer()">Start Timer</button>
+        <div id="timer" class="timer">00:00</div>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        let timerInterval;
+
+        function startTimer() {
+            const minutes = document.getElementById("minutes").value;
+            fetch('/start_timer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ minutes: minutes })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("message").innerHTML = data.status;
+                startCountdown();
+            });
+        }
+
+        function startCountdown() {
+            clearInterval(timerInterval); // Clear any existing interval
+            timerInterval = setInterval(function() {
+                fetch('/get_time')
+                .then(response => response.json())
+                .then(data => {
+                    const { minutes, seconds } = data;
+                    document.getElementById("timer").innerHTML = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    if (minutes === 0 && seconds === 0) {
+                        clearInterval(timerInterval);
+                        document.getElementById("message").innerHTML = "Time's up! Take a break.";
+                    }
+                });
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
